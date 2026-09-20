@@ -4,11 +4,20 @@ namespace Tests\Feature;
 
 use App\Models\Document;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DocumentApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Storage::fake('local');
+    }
 
     public function test_it_lists_documents(): void
     {
@@ -21,27 +30,44 @@ class DocumentApiTest extends TestCase
             ->assertJsonFragment(['original_filename' => 'a.pdf']);
     }
 
-    public function test_it_creates_a_document_as_pending(): void
+    public function test_it_uploads_and_processes_a_text_file(): void
     {
-        $this->postJson('/api/documents', [
-            'original_filename' => 'contrato.pdf',
-        ])
+        $file = UploadedFile::fake()->createWithContent('notes.txt', 'hello');
+
+        $this->post('/api/documents', ['file' => $file], ['Accept' => 'application/json'])
             ->assertCreated()
-            ->assertJsonPath('original_filename', 'contrato.pdf')
-            ->assertJsonPath('status', Document::STATUS_PENDING)
-            ->assertJsonPath('sha256', null);
+            ->assertJsonPath('original_filename', 'notes.txt')
+            ->assertJsonPath('status', Document::STATUS_COMPLETED)
+            ->assertJsonPath('size_bytes', 5)
+            ->assertJsonPath('sha256', hash('sha256', 'hello'))
+            ->assertJsonPath('page_count', null);
 
         $this->assertDatabaseHas('documents', [
-            'original_filename' => 'contrato.pdf',
-            'status' => Document::STATUS_PENDING,
+            'original_filename' => 'notes.txt',
+            'status' => Document::STATUS_COMPLETED,
+            'sha256' => hash('sha256', 'hello'),
         ]);
+
+        Storage::disk('local')->assertExists(
+            Document::query()->first()->storage_path
+        );
     }
 
-    public function test_it_requires_original_filename(): void
+    public function test_it_counts_pages_when_uploading_a_pdf(): void
+    {
+        $file = UploadedFile::fake()->createWithContent('aula.pdf', $this->onePagePdf());
+
+        $this->post('/api/documents', ['file' => $file], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonPath('status', Document::STATUS_COMPLETED)
+            ->assertJsonPath('page_count', 1);
+    }
+
+    public function test_it_requires_a_file(): void
     {
         $this->postJson('/api/documents', [])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['original_filename']);
+            ->assertJsonValidationErrors(['file']);
     }
 
     public function test_it_shows_a_document(): void
@@ -92,5 +118,17 @@ class DocumentApiTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('original_filename', 'aula.pdf');
+    }
+
+    private function onePagePdf(): string
+    {
+        return <<<'PDF'
+        %PDF-1.1
+        1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
+        2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
+        3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 3 3]>>endobj
+        trailer<</Root 1 0 R>>
+        %%EOF
+        PDF;
     }
 }

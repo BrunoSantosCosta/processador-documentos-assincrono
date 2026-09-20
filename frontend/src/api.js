@@ -1,13 +1,18 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000'
 
 async function request(path, options = {}) {
+  const headers = {
+    Accept: 'application/json',
+    ...(options.headers ?? {}),
+  }
+
+  if (!(options.body instanceof FormData) && headers['Content-Type'] === undefined) {
+    headers['Content-Type'] = 'application/json'
+  }
+
   const response = await fetch(`${API_URL}${path}`, {
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
-    },
     ...options,
+    headers,
   })
 
   const data = await response.json().catch(() => null)
@@ -24,10 +29,13 @@ export function listDocuments() {
   return request('/api/documents')
 }
 
-export function createDocument(originalFilename) {
+export function createDocument(file) {
+  const body = new FormData()
+  body.append('file', file)
+
   return request('/api/documents', {
     method: 'POST',
-    body: JSON.stringify({ original_filename: originalFilename }),
+    body,
   })
 }
 

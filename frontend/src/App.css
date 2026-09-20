@@ -157,8 +157,10 @@ dt {
   color: #64748b;
 }
 
-dd {
-  margin: 0.15rem 0 0;
+dd.hash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
 }
 
 .actions {

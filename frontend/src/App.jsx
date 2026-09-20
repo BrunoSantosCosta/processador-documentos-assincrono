@@ -25,10 +25,23 @@ function formatDate(value) {
   return new Date(value).toLocaleString('pt-BR')
 }
 
+function formatBytes(bytes) {
+  if (bytes == null) {
+    return '—'
+  }
+
+  if (bytes < 1024) {
+    return `${bytes} B`
+  }
+
+  return `${(bytes / 1024).toFixed(1)} KB`
+}
+
 export default function App() {
   const [documents, setDocuments] = useState([])
   const [selectedId, setSelectedId] = useState(null)
-  const [filename, setFilename] = useState('')
+  const [file, setFile] = useState(null)
+  const [fileInputKey, setFileInputKey] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -68,10 +81,9 @@ export default function App() {
 
   async function handleCreate(event) {
     event.preventDefault()
-    const name = filename.trim()
 
-    if (!name) {
-      setError('Informe o nome do arquivo.')
+    if (!file) {
+      setError('Selecione um arquivo.')
       return
     }
 
@@ -79,8 +91,9 @@ export default function App() {
     setError(null)
 
     try {
-      const created = await createDocument(name)
-      setFilename('')
+      const created = await createDocument(file)
+      setFile(null)
+      setFileInputKey((key) => key + 1)
       await refresh(created.id)
     } catch (err) {
       setError(err.message)
@@ -111,11 +124,11 @@ export default function App() {
     <main className="page">
       <header className="header">
         <div>
-          <p className="eyebrow">Etapa 3</p>
+          <p className="eyebrow">Etapa 4</p>
           <h1>Processador de Documentos</h1>
           <p className="lede">
-            Interface local da API. Ainda sem upload de arquivo — só o registro
-            e o status.
+            O upload e a extração de metadados acontecem na mesma request.
+            A tela espera o Laravel terminar.
           </p>
         </div>
         <button type="button" className="button secondary" onClick={() => {
@@ -129,20 +142,19 @@ export default function App() {
       {error ? <p className="banner error">{error}</p> : null}
 
       <section className="card">
-        <h2>Novo documento</h2>
+        <h2>Enviar arquivo</h2>
         <form className="form" onSubmit={handleCreate}>
-          <label htmlFor="filename">Nome do arquivo</label>
+          <label htmlFor="file">Arquivo</label>
           <div className="row">
             <input
-              id="filename"
-              type="text"
-              placeholder="contrato.pdf"
-              value={filename}
-              onChange={(event) => setFilename(event.target.value)}
+              id="file"
+              key={fileInputKey}
+              type="file"
+              onChange={(event) => setFile(event.target.files[0] ?? null)}
               disabled={saving}
             />
             <button type="submit" className="button" disabled={saving}>
-              Criar
+              {saving ? 'Processando…' : 'Enviar'}
             </button>
           </div>
         </form>
@@ -203,15 +215,33 @@ export default function App() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Criado em</dt>
-                  <dd>{formatDate(selected.created_at)}</dd>
+                  <dt>Tipo</dt>
+                  <dd>{selected.mime_type ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt>Tamanho</dt>
+                  <dd>{formatBytes(selected.size_bytes)}</dd>
+                </div>
+                <div>
+                  <dt>Páginas</dt>
+                  <dd>{selected.page_count ?? '—'}</dd>
                 </div>
                 <div>
                   <dt>SHA-256</dt>
-                  <dd>{selected.sha256 ?? '—'}</dd>
+                  <dd className="hash">{selected.sha256 ?? '—'}</dd>
                 </div>
+                <div>
+                  <dt>Processado em</dt>
+                  <dd>{formatDate(selected.processed_at)}</dd>
+                </div>
+                {selected.error_message ? (
+                  <div>
+                    <dt>Erro</dt>
+                    <dd>{selected.error_message}</dd>
+                  </div>
+                ) : null}
               </dl>
-              <p className="muted">Alterar status (simula o processamento):</p>
+              <p className="muted">Alterar status (ainda disponível para testes):</p>
               <div className="actions">
                 {STATUSES.map((item) => (
                   <button

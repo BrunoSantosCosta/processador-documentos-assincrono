@@ -50,6 +50,7 @@ database/database.sqlite
 
 # Local uploads (Etapa 4)
 storage/app/documents/
+storage/app/private/documents/
 uploads/
 
 # Logs
