@@ -33,6 +33,7 @@
         <env name="AWS_SECRET_ACCESS_KEY" value="testing" force="true"/>
         <env name="AWS_DEFAULT_REGION" value="us-east-1" force="true"/>
         <env name="AWS_BUCKET" value="testing-bucket" force="true"/>
+        <env name="AWS_SQS_QUEUE_URL" value="https://sqs.us-east-1.amazonaws.com/123456789012/testing" force="true"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

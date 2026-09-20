@@ -124,11 +124,11 @@ export default function App() {
     <main className="page">
       <header className="header">
         <div>
-          <p className="eyebrow">Etapa 5</p>
+          <p className="eyebrow">Etapa 6</p>
           <h1>Processador de Documentos</h1>
           <p className="lede">
-            O arquivo vai para o S3. O processamento ainda é síncrono: a tela
-            espera o Laravel terminar o upload e os metadados.
+            O arquivo vai para o S3. Uma mensagem vai para o SQS. O status
+            fica pendente até o worker (Etapa 7) processar.
           </p>
         </div>
         <button type="button" className="button secondary" onClick={() => {
@@ -154,7 +154,7 @@ export default function App() {
               disabled={saving}
             />
             <button type="submit" className="button" disabled={saving}>
-              {saving ? 'Processando…' : 'Enviar'}
+              {saving ? 'Enviando…' : 'Enviar'}
             </button>
           </div>
         </form>

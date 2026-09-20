@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Document;
-use App\Services\DocumentProcessor;
+use App\Services\DocumentQueue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,9 +12,7 @@ use Throwable;
 
 class DocumentController extends Controller
 {
-    public function __construct(private DocumentProcessor $processor)
-    {
-    }
+    public function __construct(private DocumentQueue $queue) {}
 
     public function index(): JsonResponse
     {
@@ -33,22 +31,12 @@ class DocumentController extends Controller
 
         $document = Document::create([
             'original_filename' => $file->getClientOriginalName(),
-            'status' => Document::STATUS_PROCESSING,
+            'mime_type' => $file->getMimeType(),
+            'size_bytes' => $file->getSize(),
+            'status' => Document::STATUS_PENDING,
         ]);
 
         try {
-            $tempPath = $file->getRealPath();
-
-            if ($tempPath === false) {
-                throw new \RuntimeException('Upload temporário indisponível.');
-            }
-
-            $result = $this->processor->process(
-                $tempPath,
-                $file->getMimeType(),
-                $file->getClientOriginalName(),
-            );
-
             $path = $file->store('documents', 's3');
 
             if ($path === false) {
@@ -56,12 +44,10 @@ class DocumentController extends Controller
             }
 
             $document->update([
-                ...$result,
                 'storage_path' => $path,
-                'status' => Document::STATUS_COMPLETED,
-                'processed_at' => now(),
-                'error_message' => null,
             ]);
+
+            $this->queue->publish($document->refresh());
         } catch (Throwable $exception) {
             $document->update([
                 'status' => Document::STATUS_FAILED,
