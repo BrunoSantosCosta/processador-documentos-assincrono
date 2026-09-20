@@ -16,7 +16,7 @@ class DocumentApiTest extends TestCase
     {
         parent::setUp();
 
-        Storage::fake('local');
+        Storage::fake('s3');
     }
 
     public function test_it_lists_documents(): void
@@ -40,7 +40,8 @@ class DocumentApiTest extends TestCase
             ->assertJsonPath('status', Document::STATUS_COMPLETED)
             ->assertJsonPath('size_bytes', 5)
             ->assertJsonPath('sha256', hash('sha256', 'hello'))
-            ->assertJsonPath('page_count', null);
+            ->assertJsonPath('page_count', null)
+            ->assertJsonPath('storage_path', fn ($path) => is_string($path) && str_starts_with($path, 'documents/'));
 
         $this->assertDatabaseHas('documents', [
             'original_filename' => 'notes.txt',
@@ -48,7 +49,7 @@ class DocumentApiTest extends TestCase
             'sha256' => hash('sha256', 'hello'),
         ]);
 
-        Storage::disk('local')->assertExists(
+        Storage::disk('s3')->assertExists(
             Document::query()->first()->storage_path
         );
     }

@@ -7,7 +7,6 @@ use App\Models\Document;
 use App\Services\DocumentProcessor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Throwable;
 
@@ -38,17 +37,23 @@ class DocumentController extends Controller
         ]);
 
         try {
-            $path = $file->store('documents');
+            $tempPath = $file->getRealPath();
 
-            if ($path === false) {
-                throw new \RuntimeException('Falha ao gravar o arquivo no disco.');
+            if ($tempPath === false) {
+                throw new \RuntimeException('Upload temporário indisponível.');
             }
 
             $result = $this->processor->process(
-                Storage::path($path),
+                $tempPath,
                 $file->getMimeType(),
                 $file->getClientOriginalName(),
             );
+
+            $path = $file->store('documents', 's3');
+
+            if ($path === false) {
+                throw new \RuntimeException('Falha ao enviar o arquivo para o S3.');
+            }
 
             $document->update([
                 ...$result,

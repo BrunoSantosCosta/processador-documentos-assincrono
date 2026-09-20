@@ -124,11 +124,11 @@ export default function App() {
     <main className="page">
       <header className="header">
         <div>
-          <p className="eyebrow">Etapa 4</p>
+          <p className="eyebrow">Etapa 5</p>
           <h1>Processador de Documentos</h1>
           <p className="lede">
-            O upload e a extração de metadados acontecem na mesma request.
-            A tela espera o Laravel terminar.
+            O arquivo vai para o S3. O processamento ainda é síncrono: a tela
+            espera o Laravel terminar o upload e os metadados.
           </p>
         </div>
         <button type="button" className="button secondary" onClick={() => {
@@ -229,6 +229,10 @@ export default function App() {
                 <div>
                   <dt>SHA-256</dt>
                   <dd className="hash">{selected.sha256 ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt>Chave S3</dt>
+                  <dd className="hash">{selected.storage_path ?? '—'}</dd>
                 </div>
                 <div>
                   <dt>Processado em</dt>
