@@ -79,6 +79,16 @@ export default function App() {
     }
   }, [])
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      listDocuments()
+        .then(setDocuments)
+        .catch(() => {})
+    }, 3000)
+
+    return () => clearInterval(timer)
+  }, [])
+
   async function handleCreate(event) {
     event.preventDefault()
 
@@ -124,11 +134,11 @@ export default function App() {
     <main className="page">
       <header className="header">
         <div>
-          <p className="eyebrow">Etapa 6</p>
+          <p className="eyebrow">Etapa 7</p>
           <h1>Processador de Documentos</h1>
           <p className="lede">
-            O arquivo vai para o S3. Uma mensagem vai para o SQS. O status
-            fica pendente até o worker (Etapa 7) processar.
+            O Laravel envia o arquivo ao S3 e a mensagem ao SQS. O worker Go
+            processa em seguida. A lista atualiza sozinha a cada 3 segundos.
           </p>
         </div>
         <button type="button" className="button secondary" onClick={() => {
