@@ -1,0 +1,58 @@
+# Environment and secrets — never commit real values
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Node / React
+node_modules/
+dist/
+build/
+.vite/
+
+# PHP / Laravel
+vendor/
+.phpunit.result.cache
+.phpunit.cache/
+storage/logs/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+bin/
+
+# Local database (SQLite)
+*.sqlite
+*.sqlite3
+database/database.sqlite
+
+# Local uploads (Etapa 4)
+storage/app/documents/
+uploads/
+
+# Logs
+*.log
+
+# Credential / key files
+*.pem
+*.key
+credentials.json
+secrets.json
