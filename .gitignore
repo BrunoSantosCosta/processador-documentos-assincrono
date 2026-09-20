@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# Local learning notes — never publish
+CONTEXTO.md
+
 # OS
 .DS_Store
 Thumbs.db
