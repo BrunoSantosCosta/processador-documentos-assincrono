@@ -53,7 +53,7 @@ func main() {
 		s3:  s3.NewFromConfig(awsCfg),
 	}
 
-	log.Printf("esperando mensagens em %s", cfg.QueueURL)
+	log.Printf("esperando mensagens em %s (concorrência %d)", cfg.QueueURL, cfg.Concurrency)
 
 	if err := worker.run(ctx); err != nil && ctx.Err() == nil {
 		log.Fatal(err)
@@ -70,9 +70,12 @@ type worker struct {
 }
 
 func (w *worker) run(ctx context.Context) error {
+	slots := newLimiter(w.cfg.Concurrency)
+	defer slots.wait()
+
 	for {
-		if ctx.Err() != nil {
-			return ctx.Err()
+		if err := slots.acquire(ctx); err != nil {
+			return err
 		}
 
 		out, err := w.sqs.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
@@ -82,6 +85,7 @@ func (w *worker) run(ctx context.Context) error {
 			VisibilityTimeout:   60,
 		})
 		if err != nil {
+			slots.release()
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
@@ -90,10 +94,15 @@ func (w *worker) run(ctx context.Context) error {
 		}
 
 		if len(out.Messages) == 0 {
+			slots.release()
 			continue
 		}
 
-		w.handle(ctx, out.Messages[0])
+		msg := out.Messages[0]
+		jobCtx := context.WithoutCancel(ctx)
+		slots.goWork(func() {
+			w.handle(jobCtx, msg)
+		})
 	}
 }
 

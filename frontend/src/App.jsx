@@ -134,11 +134,11 @@ export default function App() {
     <main className="page">
       <header className="header">
         <div>
-          <p className="eyebrow">Etapa 7</p>
+          <p className="eyebrow">Etapa 8</p>
           <h1>Processador de Documentos</h1>
           <p className="lede">
-            O Laravel envia o arquivo ao S3 e a mensagem ao SQS. O worker Go
-            processa em seguida. A lista atualiza sozinha a cada 3 segundos.
+            O worker Go processa até 3 documentos ao mesmo tempo. A lista
+            atualiza sozinha a cada 3 segundos.
           </p>
         </div>
         <button type="button" className="button secondary" onClick={() => {
