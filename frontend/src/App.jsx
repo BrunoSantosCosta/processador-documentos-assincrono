@@ -134,11 +134,11 @@ export default function App() {
     <main className="page">
       <header className="header">
         <div>
-          <p className="eyebrow">Etapa 8</p>
+          <p className="eyebrow">Etapa 9</p>
           <h1>Processador de Documentos</h1>
           <p className="lede">
-            O worker Go processa até 3 documentos ao mesmo tempo. A lista
-            atualiza sozinha a cada 3 segundos.
+            API, interface e worker sobem com Docker Compose. O worker
+            processa até 3 documentos ao mesmo tempo.
           </p>
         </div>
         <button type="button" className="button secondary" onClick={() => {

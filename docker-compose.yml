@@ -1,0 +1,44 @@
+services:
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    environment:
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /data/database.sqlite
+      CORS_ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080,http://localhost:5173,http://127.0.0.1:5173
+    volumes:
+      - sqlite:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/up"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+
+  worker:
+    build: ./worker
+    env_file:
+      - backend/.env
+    environment:
+      SQLITE_PATH: /data/database.sqlite
+      WORKER_CONCURRENCY: "3"
+    volumes:
+      - sqlite:/data
+    depends_on:
+      api:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "8080:80"
+
+volumes:
+  sqlite:
